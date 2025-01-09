@@ -1,0 +1,82 @@
+---
+title: "Hallazgos"
+format: html
+editor: visual
+---
+
+## Hallazgos
+
+Se realizó un scrapeo de datos a la plataforma X, antes Twitter, utilizando la herramienta <https://github.com/helmisatria/tweet-harvest>
+
+```{r}
+#| output: false
+library(dplyr)
+library(plotly)
+library(ggplot2)
+```
+
+```{r}
+d2 <- read.csv("./data/sheinbaum_100_dias.csv")
+```
+
+Del periodo comprendido entre el 1 de octubre al 31 de diciembre se recuperaron 5,856 posts de la paltaforma X que contenian la palabra clave "Sheinbaum". Del total de posteos, 96% están en español. Asimismo, 9.9% de los posteos, 581, se realizaron el 5 de octubre.
+
+La siguiente gráfica muestra la cantidad de posteos por fecha.
+
+```{r}
+a <- d2 %>% 
+  count(fecha_corta) %>% 
+  ggplot(aes(x = fecha_corta, y = n)) +
+  geom_bar(stat = "identity") +
+  labs(x = "", y = "", title = "Posteos por fecha") +
+  theme(axis.text.x = element_text(angle = 90)) 
+ggplotly(a)
+```
+
+You can add options to executable code like this
+
+```{r}
+b <- 
+  d2 %>% 
+  group_by(hora) %>% 
+  summarise(
+    n = n(), .groups = "drop"
+  ) %>% 
+  mutate(pct = n*100/sum(n)) %>% 
+  ggplot(aes(x = hora, y = pct)) +
+  geom_line() +
+  labs(x = "Hora - Formato 24 horas", y = "%", title = "Porcentaje de posteos por hora") +
+  theme_bw()
+ggplotly(b)
+```
+
+```{r}
+c <- d2 %>% 
+  count(username, sort = T) %>% 
+  filter(n >= 20) %>% 
+  ggplot(aes(x = reorder(username, n), y = n)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  labs(x = "", y = "", title = "Top de cuentas que han posteado más de 20 veces")
+ggplotly(c)
+```
+
+```{r}
+d2 %>% 
+  top_n(favorite_count, n = 10) %>% 
+  select(fecha, username, full_text, tweet_url) %>% 
+  as_tibble() %>% 
+  knitr::kable(caption = "Top 10 posteos con mayor número de favoritos")
+```
+
+```{r}
+d <- d2 %>% 
+  count(lang) %>% 
+  mutate(pct = n*100/sum(n)) %>% 
+  ggplot(aes(x = reorder(lang, pct), y = pct)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  # scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = "Idioma", y = "%", title = "Porcentaje de posteos de acuerdo al idioma")
+ggplotly(d)
+```
